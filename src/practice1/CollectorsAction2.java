@@ -1,11 +1,18 @@
 package practice1;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +34,11 @@ public class CollectorsAction2 {
         ConcurrentMap<String, List<Apple>> map = list.stream().collect(Collectors.groupingByConcurrent(Apple::getColor));
         Optional.ofNullable(map.getClass()).ifPresent(System.out::println);
         Optional.ofNullable(map).ifPresent(System.out::println);
+        System.out.println("=========");
+
+        // 生成允许key为null的map，效果和groupingBy一样(groupingBy不允许key为null)
+        Map<String, List<Apple>> nullKeyMap = groupingByWithNullKey(list, Apple::getColor, LinkedHashMap::new);
+        System.out.println("允许key为null的map ====> " + nullKeyMap);
         System.out.println("=========");
 
         //Collectors.groupingByConcurrent:分组后计算平均值再保存到ConcurrentMap中
@@ -72,5 +84,34 @@ public class CollectorsAction2 {
         list.stream().map(Apple::getWeight).reduce((a, b) -> a > b ? a : b).ifPresent(System.out::println);
         list.stream().max(Comparator.comparing(Apple::getWeight)).ifPresent(System.out::println);
         System.out.println("=========");
+    }
+
+    /**
+     * 分组，允许key为null
+     *
+     * @param dataList 需要分组的数据
+     * @param keyMapper key的转换函数
+     * @param mapFactory Map的生成函数
+     * @param <T> 数据类型
+     * @param <E> 分组key的类型
+     * @param <M> 结果Map的类性
+     * @return 返回分组后的Map
+     */
+    public static <T, E, M extends Map<E, List<T>>> M groupingByWithNullKey(List<T> dataList, Function<? super T, ? extends E> keyMapper, Supplier<M> mapFactory) {
+        if (dataList == null || dataList.size() == 0) {
+            return mapFactory.get();
+        }
+        Collector<T, ?, M> collector = Collectors.toMap(
+                keyMapper,
+                // 这里使用单元素集合，减少内存
+                Collections::singletonList,
+                (List<T> oldList, List<T> newList) -> {
+                    List<T> resultList = new ArrayList<>(oldList.size() + newList.size());
+                    resultList.addAll(oldList);
+                    resultList.addAll(newList);
+                    return resultList;
+                },
+                mapFactory);
+        return dataList.stream().collect(collector);
     }
 }
