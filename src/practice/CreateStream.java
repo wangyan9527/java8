@@ -1,7 +1,5 @@
 package practice;
 
-import com.sun.tools.internal.ws.wsdl.document.Output;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

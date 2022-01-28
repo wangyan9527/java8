@@ -1,6 +1,5 @@
 package stream;
 
-import com.sun.tools.javac.code.Type;
 
 import java.util.*;
 import java.util.function.Consumer;
